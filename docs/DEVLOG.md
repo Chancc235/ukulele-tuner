@@ -76,3 +76,28 @@
 2. 用户准备 GitHub 账号/公开仓库，完成首次免费部署。
 3. 在目标 iOS 26 iPhone 上执行真实麦克风、语音备忘录 M4A、主屏幕安装和飞行模式测试。
 4. 根据真琴数据调校阈值，再做发布前 CR-002。
+
+## 2026-08-03：首次 GitHub 推送与 Pages 尝试
+
+### 远程仓库
+
+- 确认 GitHub 账号 `Chancc235`，项目级 Git 作者使用官方隐私邮箱格式，不修改全局配置。
+- 创建本地基线 commit `399a0a1`，连接并成功推送到公开仓库 `Chancc235/ukulele-tuner` 的 `main`。
+- 本机已有 `osxkeychain` Git 凭据，因此不需要安装 GitHub CLI，也没有要求用户发送密码或 token。
+
+### Actions 运行 #1
+
+- 运行地址：`https://github.com/Chancc235/ukulele-tuner/actions/runs/30755779542`。
+- `Run core tests`：通过。
+- `Run static and privacy checks`：通过。
+- `Configure GitHub Pages`：失败，GitHub 返回 Pages site Not Found。
+- 根因：新仓库还没有在 Settings -> Pages 把 Source 设为 GitHub Actions。官方 `configure-pages` 的默认 `GITHUB_TOKEN` 不能自行打开该仓库设置；不使用用户 PAT 绕过。
+- 结论：代码质量门通过，部署被一次性账号设置阻塞。
+
+### 下一步
+
+1. 用户在 `https://github.com/Chancc235/ukulele-tuner/settings/pages` 的 Build and deployment 中选择 GitHub Actions。
+2. 记录本次尝试并触发第二次 workflow。
+3. 成功后检查 HTTPS 页面、manifest、Service Worker 和发布 URL。
+
+用户已在 2026-08-03 完成 Pages 的 GitHub Actions source 设置，下一次文档提交将触发第二次完整 workflow。

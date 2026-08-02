@@ -1,10 +1,10 @@
 # 项目状态
 
 - 项目：UkeTune（暂定名）
-- 更新日期：2026-08-02
+- 更新日期：2026-08-03
 - 产品平台：iOS 26 Safari PWA
 - 当前里程碑：M6 免费部署
-- 状态：本地 MVP 完成，待公网和 iOS 26 验收
+- 状态：GitHub Pages 已启用，第二次部署准备中
 
 ## 已完成
 
@@ -21,13 +21,16 @@
 - 完成本机 M4A/MP3/WAV 选择、大小/时长校验、解码、进度、取消和窗口聚合。
 - 完成 manifest、Service Worker 离线应用壳、更新提示和 CSP。
 - 完成 GitHub Pages 测试后部署 workflow。
-- 本地 Git 仓库已初始化为 `main`；使用 GitHub 隐私邮箱为 `Chancc235` 配置项目级作者身份，尚未连接远程仓库。
+- 本地 Git 仓库已初始化为 `main`；使用 GitHub 隐私邮箱为 `Chancc235` 配置项目级作者身份。
+- 已连接公开仓库 `Chancc235/ukulele-tuner` 并推送 `main`。
+- GitHub Actions 首次运行中，22 项核心测试和静态/隐私检查均通过。
+- 首次部署在 `Configure GitHub Pages` 停止：仓库尚未在 Settings -> Pages 选择 GitHub Actions；不是代码或测试失败。
 - 自动测试 22/22、静态/隐私检查和本地 HTTP 冒烟通过。
 - 完成 CR-001；代码级 P0/P1 均已关闭并复测。
 
 ## 正在进行
 
-- 准备 GitHub 公开仓库和首次 Pages 发布。
+- GitHub Pages source 已设为 GitHub Actions；正在记录首次尝试并触发第二次部署。
 - 准备目标 iPhone 的真实音频、安装、离线和网络验收。
 
 ## 部署前需要用户完成
