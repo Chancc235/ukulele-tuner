@@ -4,3 +4,4 @@
 
 - [2026-08-02：PWA 本地 MVP](2026-08-02-pwa-local-mvp.md)
 - [2026-08-03：GitHub Pages 首次部署尝试](2026-08-03-github-pages-attempt-1.md)
+- [2026-08-03：GitHub Pages 公网预览](2026-08-03-github-pages-success.md)

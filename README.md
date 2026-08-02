@@ -2,6 +2,8 @@
 
 一款为标准 High-G 尤克里里设计的零费用 PWA 调音器，仅面向 iOS 26 iPhone。它可以从 Safari 安装到主屏幕，支持实时麦克风调音和本地录音文件识别，并在首次加载后离线运行。
 
+在线地址：<https://chancc235.github.io/ukulele-tuner/>
+
 ## 已确定范围
 
 - 四根弦与四个实体弦钮：G4、C4、E4、A4。
@@ -16,7 +18,7 @@
 
 ## 当前状态
 
-本地 MVP 已完成：应用壳、四弦调音算法、实时麦克风、本地录音分析、离线缓存和免费部署工作流均已实现。自动测试 22/22 通过；下一步是取得 HTTPS 地址，并在目标 iOS 26 iPhone 上完成真实尤克里里、语音备忘录 M4A、安装和飞行模式验收。
+公网预览版已经部署到 GitHub Pages，远程自动测试和静态/隐私检查全部通过。下一步是在目标 iOS 26 iPhone 上完成真实尤克里里、语音备忘录 M4A、主屏幕安装和飞行模式验收。
 
 先前的 Swift 原生探索保存在 `archive/native-ios-spike/`，没有删除，也不属于当前产品构建。
 
@@ -48,6 +50,7 @@ npm run dev
 - [PWA 技术决策](docs/decisions/ADR-0002-pwa-platform.md)
 - [当前状态](PROJECT_STATUS.md)
 - [最新本地测试报告](docs/test-reports/2026-08-02-pwa-local-mvp.md)
+- [公网部署测试报告](docs/test-reports/2026-08-03-github-pages-success.md)
 - [首轮代码审查](docs/reviews/CR-001-pwa-local-mvp.md)
 
 ## 隐私原则

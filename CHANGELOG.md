@@ -26,3 +26,8 @@
 ### Archived
 
 - 将早期 Swift/YIN 原型和 Xcode 方案保存到 `archive/native-ios-spike/`。
+
+### Deployed
+
+- 公网预览版发布到 `https://chancc235.github.io/ukulele-tuner/`。
+- GitHub Actions 远程核心测试、静态/隐私检查和 Pages deploy 全部通过。

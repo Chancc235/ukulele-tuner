@@ -101,3 +101,13 @@
 3. 成功后检查 HTTPS 页面、manifest、Service Worker 和发布 URL。
 
 用户已在 2026-08-03 完成 Pages 的 GitHub Actions source 设置，下一次文档提交将触发第二次完整 workflow。
+
+## 2026-08-03：GitHub Pages 公网预览成功
+
+- 推送文档 commit `fa01bce`，触发 Actions run `30756052345`。
+- build 和 deploy 两个 job 全部成功；22 项核心测试与静态/隐私检查再次通过。
+- 发布地址：`https://chancc235.github.io/ukulele-tuner/`。
+- 线上验收：页面、manifest、Service Worker、`app.js` 和 Apple Touch 图标均为 HTTP 200，MIME 正确。
+- 线上页面确认包含 Auto、G/C/E/A、本机录音入口和音频“不保存、不上传”文案。
+- 线上 Service Worker 确认使用 `uketune-v1`，预缓存主页面、四弦应用模块、录音分析模块和图标。
+- 剩余发布门：目标 iOS 26 iPhone 的麦克风、真实录音、添加到主屏幕、飞行模式和真琴准确度。

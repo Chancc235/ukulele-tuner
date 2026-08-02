@@ -1,14 +1,16 @@
 # 免费部署与 iPhone 安装
 
-## 当前准备状态
+## 当前部署状态
 
-项目已经包含 `.github/workflows/deploy-pages.yml`，会先运行 22 项核心测试和静态/隐私检查，再把 `app/` 上传到 GitHub Pages。工作流配置已在本地解析，但目前没有创建远程仓库，也没有对外发布地址。
+项目已经部署到：<https://chancc235.github.io/ukulele-tuner/>。
+
+仓库为 `Chancc235/ukulele-tuner`。`.github/workflows/deploy-pages.yml` 会先运行 22 项核心测试和静态/隐私检查，再把 `app/` 上传到 GitHub Pages。第二次 workflow 和线上静态资源验收已经通过。
 
 ## 默认方案：GitHub Pages
 
 GitHub Free 可以从公开仓库部署静态 PWA，并提供 `github.io` HTTPS 地址。项目没有后端、数据库或构建服务器需求，因此不产生托管费用。
 
-### 用户需要做的事
+### 首次部署已完成的步骤
 
 1. 准备 GitHub 账号。
 2. 确认接受项目仓库公开；部署后的前端代码无论如何都能被浏览器查看。
@@ -17,7 +19,7 @@ GitHub Free 可以从公开仓库部署静态 PWA，并提供 `github.io` HTTPS 
 5. 把本项目推送到仓库的 `main` 分支。
 6. 在仓库 Settings -> Pages 的 Source 选择 GitHub Actions。
 7. 等待 Actions 显示绿色成功标记，并复制生成的 HTTPS 地址。
-8. 在 iPhone 的 Wi-Fi 和蜂窝网络分别打开发布地址，确认实际可达性。
+8. 在 iPhone 的 Wi-Fi 和蜂窝网络分别打开发布地址，确认实际可达性。（待真机执行）
 
 不需要 Apple Developer Program、Xcode、信用卡、付费域名或服务器账号。
 
