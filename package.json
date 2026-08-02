@@ -1,0 +1,16 @@
+{
+  "name": "uketune-pwa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline-first iOS PWA tuner for standard high-G ukulele.",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check-static.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

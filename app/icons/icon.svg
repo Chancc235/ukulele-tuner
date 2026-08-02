@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">UkeTune</title>
+  <desc id="description">四个弦钮组成的尤克里里琴头</desc>
+  <rect width="512" height="512" rx="116" fill="#102a2a"/>
+  <circle cx="256" cy="256" r="188" fill="#173636" stroke="#f5bf63" stroke-width="12"/>
+  <path d="M206 372V177c0-46 23-74 50-74s50 28 50 74v195c0 21-17 38-38 38h-24c-21 0-38-17-38-38Z" fill="#f5bf63"/>
+  <path d="M229 366V180c0-27 11-47 27-47s27 20 27 47v186" fill="none" stroke="#102a2a" stroke-width="13" stroke-linecap="round"/>
+  <path d="M244 159v205M256 151v213M268 159v205" fill="none" stroke="#fff4d7" stroke-width="4" stroke-linecap="round"/>
+  <g fill="#65dfa9" stroke="#102a2a" stroke-width="8">
+    <circle cx="181" cy="196" r="28"/>
+    <circle cx="331" cy="196" r="28"/>
+    <circle cx="181" cy="300" r="28"/>
+    <circle cx="331" cy="300" r="28"/>
+  </g>
+  <path d="M206 196h-25M306 196h25M206 300h-25M306 300h25" fill="none" stroke="#f5bf63" stroke-width="16" stroke-linecap="round"/>
+</svg>
+

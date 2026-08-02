@@ -1,0 +1,34 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Editors
+.idea/
+.vscode/
+*.iml
+
+# Build outputs
+build/
+dist/
+out/
+.gradle/
+.dart_tool/
+.swiftpm/
+DerivedData/
+**/.build/
+.cache/
+**/.toolchains/*.app/
+node_modules/
+coverage/
+
+# Signing material must never enter Git
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+*.cer
+*.key
+
+# Local logs
+*.log

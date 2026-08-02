@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#102a2a">
+    <meta name="color-scheme" content="dark light">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    >
+    <meta name="description" content="离线、保护隐私的尤克里里 High-G 调音器">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="UkeTune">
+    <title>UkeTune · 尤克里里调音器</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./icons/icon-180.png">
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">HIGH-G UKULELE</p>
+          <h1>UkeTune</h1>
+        </div>
+        <div class="status-stack" aria-label="应用状态">
+          <span id="connection-status" class="status-chip" data-status="online">在线</span>
+          <span id="offline-status" class="status-chip" data-status="pending">准备离线</span>
+        </div>
+      </header>
+
+      <main>
+        <section id="tuner-card" class="tuner-card" data-state="idle" aria-labelledby="target-note">
+          <div class="target-heading">
+            <p id="target-string" class="target-string">自动识别</p>
+            <h2 id="target-note">—</h2>
+            <p id="frequency-value" class="frequency-value">等待声音</p>
+          </div>
+
+          <div class="meter-wrap">
+            <div class="meter-labels" aria-hidden="true">
+              <span>偏低</span>
+              <span>准</span>
+              <span>偏高</span>
+            </div>
+            <input
+              id="tuning-meter"
+              class="tuning-meter"
+              type="range"
+              min="-50"
+              max="50"
+              step="0.1"
+              value="0"
+              tabindex="-1"
+              aria-label="音高偏差，单位音分"
+              disabled
+            >
+          </div>
+
+          <output id="cents-value" class="cents-value" aria-live="off">— cents</output>
+          <p id="tuning-message" class="tuning-message" aria-live="polite">选择一种方式开始调音</p>
+        </section>
+
+        <section class="control-card" aria-labelledby="string-selector-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">四个弦钮</p>
+              <h2 id="string-selector-title">选择目标弦</h2>
+            </div>
+            <p class="section-note">第 4 弦 → 第 1 弦</p>
+          </div>
+
+          <div class="string-selector" role="group" aria-label="目标弦">
+            <button class="target-button auto-target is-selected" type="button" data-target-note="" aria-pressed="true">
+              自动
+            </button>
+            <button class="target-button peg-button" type="button" data-target-note="G4" aria-pressed="false">
+              <span class="peg-note">G</span><span class="peg-string">第 4 弦</span>
+            </button>
+            <button class="target-button peg-button" type="button" data-target-note="C4" aria-pressed="false">
+              <span class="peg-note">C</span><span class="peg-string">第 3 弦</span>
+            </button>
+            <button class="target-button peg-button" type="button" data-target-note="E4" aria-pressed="false">
+              <span class="peg-note">E</span><span class="peg-string">第 2 弦</span>
+            </button>
+            <button class="target-button peg-button" type="button" data-target-note="A4" aria-pressed="false">
+              <span class="peg-note">A</span><span class="peg-string">第 1 弦</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="control-card" aria-labelledby="input-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">输入方式</p>
+              <h2 id="input-title">听琴弦或读录音</h2>
+            </div>
+          </div>
+
+          <div class="input-actions">
+            <button id="microphone-button" class="primary-button" type="button">
+              开始实时调音
+            </button>
+            <label id="recording-label" class="secondary-button" for="recording-input">
+              选择录音（本机分析）
+              <input
+                id="recording-input"
+                class="visually-hidden"
+                type="file"
+                accept="audio/*,.m4a,.mp3,.wav"
+              >
+            </label>
+          </div>
+
+          <div id="analysis-status" class="analysis-status" hidden>
+            <div class="progress-row">
+              <span id="file-status">正在分析录音…</span>
+              <span id="progress-value">0%</span>
+            </div>
+            <progress id="analysis-progress" max="1" value="0">0%</progress>
+            <button id="cancel-analysis-button" class="text-button" type="button">取消分析</button>
+          </div>
+
+          <p id="input-help" class="help-text">
+            一次只拨一根弦，手机距琴约 20–40 cm。录音建议 2–10 秒，只拨同一根弦。
+          </p>
+          <p class="privacy-note">
+            麦克风和录音只在当前设备内存中分析，不保存、不上传。
+          </p>
+        </section>
+
+        <details id="install-instructions" class="install-card">
+          <summary>安装到 iPhone 主屏幕</summary>
+          <ol>
+            <li>使用 Safari 打开这个 HTTPS 页面。</li>
+            <li>点“分享”，再点“添加到主屏幕”。</li>
+            <li>开启“打开为 Web App”，然后点“添加”。</li>
+          </ol>
+        </details>
+
+        <section id="update-banner" class="update-banner" hidden aria-live="polite">
+          <p>新版本已经准备好。</p>
+          <button id="apply-update-button" class="text-button" type="button">立即更新</button>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <span id="version-label">v0.1.0</span>
+        <span>标准 High-G · A4 = 440 Hz</span>
+      </footer>
+    </div>
+
+    <noscript>UkeTune 需要 JavaScript 才能分析音高。</noscript>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
