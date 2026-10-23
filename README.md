@@ -18,7 +18,7 @@
 
 ## 当前状态
 
-v0.1.0 公网预览版已经部署到 GitHub Pages。针对 iOS 26.6.1 上一直“正在听”但没有读数的反馈，本地已完成 v0.1.1 音频启动、故障检测和收音提示修复，34 项自动测试、静态/隐私检查和桌面模拟麦克风测试通过。修复尚未发布，目标 iPhone 的真实采集仍需复测。
+v0.1.1 已部署到 GitHub Pages，包含针对一直“正在听”但没有读数的音频启动、故障检测和收音提示修复。34 项自动测试、静态/隐私检查、桌面模拟麦克风、旧版 PWA 更新及离线重开测试通过；线上 17 个 URL 的文件内容与已测试版本一致。目标 iOS 26.6.1 iPhone 的真实采集仍需复测。
 
 先前的 Swift 原生探索保存在 `archive/native-ios-spike/`，没有删除，也不属于当前产品构建。
 
@@ -32,6 +32,14 @@ npm run check
 npm run icons
 npm run dev
 ```
+
+真机测试前还可运行浏览器集成测试：
+
+```bash
+npm run test:browser
+```
+
+该脚本使用临时 Chrome 配置和模拟麦克风，不读取真实麦克风，也不安装第三方 npm 依赖。默认使用 macOS Google Chrome；其他 Chromium 可通过 `UKETUNE_BROWSER_PATH` 指定路径。更新测试需要本地 Git 历史包含旧版提交 `399a0a1`，也可用 `UKETUNE_PREVIOUS_REF` 指定旧版。具体范围见[测试计划](docs/05-testing.md)。
 
 本地开发地址默认是 `http://localhost:4173`。iPhone 真机麦克风和安装测试必须使用部署后的 HTTPS 地址。
 
@@ -51,6 +59,7 @@ npm run dev
 - [当前状态](PROJECT_STATUS.md)
 - [最新本地测试报告](docs/test-reports/2026-10-23-microphone-recovery.md)
 - [公网部署测试报告](docs/test-reports/2026-08-03-github-pages-success.md)
+- [v0.1.1 发布与真机前测试报告](docs/test-reports/2026-10-23-v0.1.1-release.md)
 - [首轮代码审查](docs/reviews/CR-001-pwa-local-mvp.md)
 
 ## 隐私原则

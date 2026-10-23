@@ -23,6 +23,26 @@ npm run check
 
 ## 2. 桌面浏览器功能测试
 
+可重复执行的集成测试：
+
+```bash
+npm run test:browser
+```
+
+脚本使用 Node 内置工具、Chrome DevTools Protocol、临时浏览器配置和合成 WAV，不依赖第三方 npm 包、不读取真实麦克风。默认启动 macOS Google Chrome，可用 `UKETUNE_BROWSER_PATH` 指定其他 Chromium 路径；本次已验证 macOS Chrome，未把该脚本加入 Linux CI。
+
+- 在同一浏览器安装旧版 `399a0a1`，切换到当前源码，验证更新提示、点击更新、版本号和旧缓存清理。需要本地包含旧版 Git 历史；可设置 `UKETUNE_PREVIOUS_REF`。
+- 经真实 `getUserMedia → AnalyserNode → YIN → UI` 输入 C/E/G/A 正弦波，等待稳定读数在目标 3 cents 内且显示“准了”。
+- 验证无声提示、停止释放资源、音频中断、授权后恢复、取消权限等待和晚返回流清理。
+- 模拟拒绝权限，验证重试和录音入口可用；恢复授权后再次识别 C4。
+- 通过真实文件输入选择 C4 WAV，验证本地解码和结果。
+- 断开浏览器网络并关闭测试服务器，重新加载缓存页面，再用模拟麦克风验证离线调音。
+- 检查未捕获异常与手机宽度下的横向溢出，保存临时截图。
+
+这种浏览器 API 模拟用于验证应用面对不同 API 行为时的处理流程，参见 [Playwright 官方模拟说明](https://playwright.dev/docs/mock-browser-apis)；本项目脚本直接使用 Chrome DevTools Protocol，并未引入 Playwright。
+
+另需按实际浏览器和文件补充以下手工检查：
+
 - 本地页面无控制台错误。
 - 自动/G/C/E/A 按钮状态和键盘操作正确。
 - 麦克风允许、拒绝、开始、停止、重复开始。

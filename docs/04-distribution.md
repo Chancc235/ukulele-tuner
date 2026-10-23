@@ -4,7 +4,7 @@
 
 项目已经部署到：<https://chancc235.github.io/ukulele-tuner/>。
 
-仓库为 `Chancc235/ukulele-tuner`。`.github/workflows/deploy-pages.yml` 会先运行 22 项核心测试和静态/隐私检查，再把 `app/` 上传到 GitHub Pages。第二次 workflow 和线上静态资源验收已经通过。
+仓库为 `Chancc235/ukulele-tuner`。`.github/workflows/deploy-pages.yml` 会先运行 34 项核心测试和静态/隐私检查，再把 `app/` 上传到 GitHub Pages。当前版本为 v0.1.1，远程工作流及线上文件一致性验证已通过；浏览器更新和离线测试记录见 [v0.1.1 发布报告](test-reports/2026-10-23-v0.1.1-release.md)。
 
 ## 默认方案：GitHub Pages
 
