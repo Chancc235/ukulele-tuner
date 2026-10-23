@@ -115,6 +115,14 @@
             </label>
           </div>
 
+          <div id="microphone-signal" class="microphone-signal" hidden>
+            <div class="progress-row">
+              <span>麦克风收音</span>
+              <span id="microphone-status">等待拨弦</span>
+            </div>
+            <meter id="microphone-level" min="0" max="1" value="0" aria-label="麦克风收音音量"></meter>
+          </div>
+
           <div id="analysis-status" class="analysis-status" hidden>
             <div class="progress-row">
               <span id="file-status">正在分析录音…</span>
@@ -148,7 +156,7 @@
       </main>
 
       <footer class="app-footer">
-        <span id="version-label">v0.1.0</span>
+        <span id="version-label">v0.1.1</span>
         <span>标准 High-G · A4 = 440 Hz</span>
       </footer>
     </div>

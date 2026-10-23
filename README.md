@@ -18,7 +18,7 @@
 
 ## 当前状态
 
-公网预览版已经部署到 GitHub Pages，远程自动测试和静态/隐私检查全部通过。下一步是在目标 iOS 26 iPhone 上完成真实尤克里里、语音备忘录 M4A、主屏幕安装和飞行模式验收。
+v0.1.0 公网预览版已经部署到 GitHub Pages。针对 iOS 26.6.1 上一直“正在听”但没有读数的反馈，本地已完成 v0.1.1 音频启动、故障检测和收音提示修复，34 项自动测试、静态/隐私检查和桌面模拟麦克风测试通过。修复尚未发布，目标 iPhone 的真实采集仍需复测。
 
 先前的 Swift 原生探索保存在 `archive/native-ios-spike/`，没有删除，也不属于当前产品构建。
 
@@ -49,7 +49,7 @@ npm run dev
 - [开发日志](docs/DEVLOG.md)
 - [PWA 技术决策](docs/decisions/ADR-0002-pwa-platform.md)
 - [当前状态](PROJECT_STATUS.md)
-- [最新本地测试报告](docs/test-reports/2026-08-02-pwa-local-mvp.md)
+- [最新本地测试报告](docs/test-reports/2026-10-23-microphone-recovery.md)
 - [公网部署测试报告](docs/test-reports/2026-08-03-github-pages-success.md)
 - [首轮代码审查](docs/reviews/CR-001-pwa-local-mvp.md)
 

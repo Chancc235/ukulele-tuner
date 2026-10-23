@@ -14,6 +14,9 @@ const elements = {
   tuningMessage: document.querySelector("#tuning-message"),
   targetButtons: [...document.querySelectorAll(".target-button")],
   microphoneButton: document.querySelector("#microphone-button"),
+  microphoneSignal: document.querySelector("#microphone-signal"),
+  microphoneLevel: document.querySelector("#microphone-level"),
+  microphoneStatus: document.querySelector("#microphone-status"),
   recordingLabel: document.querySelector("#recording-label"),
   recordingInput: document.querySelector("#recording-input"),
   analysisStatus: document.querySelector("#analysis-status"),
@@ -36,11 +39,22 @@ let liveResultVisible = false;
 let analysisAbortController = null;
 let waitingServiceWorker = null;
 let reloadForUpdate = false;
+let microphoneRequestId = 0;
+let lastSoundAtMs = null;
 
 const microphone = new MicrophoneSource({
   onFrame(samples, sampleRateHz, timestampMs) {
+    const rms = updateMicrophoneSignal(samples, timestampMs);
     const outcome = controller.processSamples(samples, sampleRateHz, timestampMs);
-    handleLiveOutcome(outcome);
+    handleLiveOutcome(outcome, rms);
+  },
+  onError(error) {
+    microphoneRequestId += 1;
+    controller.resetSignal();
+    liveResultVisible = false;
+    resetMicrophoneControls();
+    setInputControlsBusy(false);
+    renderError(microphoneErrorMessage(error));
   }
 });
 
@@ -101,53 +115,103 @@ function bindControls() {
 }
 
 async function handleMicrophoneButton() {
-  if (microphone.isRunning) {
+  if (microphone.isRunning || microphone.isStarting) {
     await stopMicrophone();
     return;
   }
 
+  const requestId = ++microphoneRequestId;
   cancelFileAnalysis({ render: false });
   controller.resetSignal();
   liveResultVisible = false;
   setInputControlsBusy(true);
-  elements.microphoneButton.textContent = "正在请求麦克风…";
+  elements.microphoneButton.disabled = false;
+  elements.microphoneButton.textContent = "取消麦克风启动";
   renderReadyState("请允许麦克风权限，然后一次拨一根弦");
 
   try {
     await microphone.start();
+    if (requestId !== microphoneRequestId) {
+      return;
+    }
     if (!microphone.isRunning) {
-      elements.microphoneButton.dataset.running = "false";
-      elements.microphoneButton.textContent = "开始实时调音";
+      resetMicrophoneControls();
       renderReadyState("实时调音已暂停，点按钮可重新开始");
       return;
     }
     elements.microphoneButton.dataset.running = "true";
     elements.microphoneButton.textContent = "停止实时调音";
+    elements.microphoneSignal.hidden = false;
+    lastSoundAtMs = null;
+    elements.microphoneLevel.value = 0;
+    elements.microphoneStatus.textContent = "等待拨弦";
     renderReadyState("正在听，请拨动一根弦");
   } catch (error) {
-    elements.microphoneButton.dataset.running = "false";
-    elements.microphoneButton.textContent = "开始实时调音";
+    if (requestId !== microphoneRequestId) {
+      return;
+    }
+    resetMicrophoneControls();
     renderError(microphoneErrorMessage(error));
   } finally {
-    setInputControlsBusy(false);
+    if (requestId === microphoneRequestId) {
+      setInputControlsBusy(false);
+    }
   }
 }
 
 async function stopMicrophone({ message = "实时调音已停止" } = {}) {
+  const requestId = ++microphoneRequestId;
   setInputControlsBusy(true);
   try {
     await microphone.stop();
+    if (requestId !== microphoneRequestId) {
+      return;
+    }
     controller.resetSignal();
     liveResultVisible = false;
-    elements.microphoneButton.dataset.running = "false";
-    elements.microphoneButton.textContent = "开始实时调音";
+    resetMicrophoneControls();
     renderReadyState(message);
   } finally {
-    setInputControlsBusy(false);
+    if (requestId === microphoneRequestId) {
+      setInputControlsBusy(false);
+    }
   }
 }
 
-function handleLiveOutcome(outcome) {
+function resetMicrophoneControls() {
+  elements.microphoneButton.dataset.running = "false";
+  elements.microphoneButton.textContent = "开始实时调音";
+  elements.microphoneSignal.hidden = true;
+  elements.microphoneLevel.value = 0;
+  lastSoundAtMs = null;
+}
+
+function updateMicrophoneSignal(samples, timestampMs) {
+  let sum = 0;
+  let squaredSum = 0;
+  for (const sample of samples) {
+    sum += sample;
+    squaredSum += sample * sample;
+  }
+  const mean = sum / samples.length;
+  const rms = Math.sqrt(Math.max(0, squaredSum / samples.length - mean * mean));
+  elements.microphoneLevel.value = rms > 0
+    ? Math.max(0, Math.min(1, (20 * Math.log10(rms) + 70) / 70))
+    : 0;
+
+  lastSoundAtMs ??= timestampMs;
+  if (rms >= detector.minimumRms) {
+    lastSoundAtMs = timestampMs;
+    elements.microphoneStatus.textContent = "已收到声音";
+  } else if (timestampMs - lastSoundAtMs >= 3000) {
+    elements.microphoneStatus.textContent = rms < 0.000001
+      ? "没有收到声音，请检查麦克风权限，或用 Safari 重新打开"
+      : "声音偏小，请让手机靠近琴弦再拨弦";
+  }
+  return rms;
+}
+
+function handleLiveOutcome(outcome, rms) {
   if (!outcome) {
     return;
   }
@@ -171,7 +235,11 @@ function handleLiveOutcome(outcome) {
 
   if ((outcome.kind === "no-signal" || outcome.kind === "uncertain")
       && !liveResultVisible) {
-    renderReadyState("正在听，请清晰地拨动一根弦");
+    renderReadyState(outcome.kind === "uncertain"
+      ? "音高偏离标准较多，请选择对应的目标弦再调音"
+      : rms >= detector.minimumRms
+        ? "已收到声音，请一次只拨一根弦，等待音高稳定"
+        : "正在听，请清晰地拨动一根弦");
   }
 }
 
@@ -328,7 +396,13 @@ function microphoneErrorMessage(error) {
     case "NotFoundError":
       return "没有找到可用麦克风，请改用录音分析。";
     case "NotReadableError":
-      return "麦克风暂时被占用。请关闭其他录音应用后重试，或选择录音分析。";
+      return "麦克风或音频引擎未能工作。请关闭其他录音应用后重试，或选择录音分析。";
+    case "AudioContextInterruptedError":
+      return "音频被系统中断，请点“开始实时调音”重新连接麦克风。";
+    case "MicrophoneMutedError":
+      return "麦克风被系统静音。请结束其他录音或通话后，点“开始实时调音”重试。";
+    case "TimeoutError":
+      return "音频引擎没有响应。请用 Safari 重新打开此页面，或选择录音分析。";
     case "NotSupportedError":
       return "当前打开方式不支持麦克风。请用 Safari 的 HTTPS 页面，或选择录音分析。";
     default:

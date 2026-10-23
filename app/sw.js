@@ -1,4 +1,4 @@
-const CACHE_VERSION = "uketune-v1";
+const CACHE_VERSION = "uketune-v2";
 const CACHE_PREFIX = "uketune-";
 const APP_SHELL = [
   "./",

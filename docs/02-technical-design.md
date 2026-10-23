@@ -78,12 +78,14 @@ cents = 1200 * log2(detectedHz / targetHz)
 
 ## 4. 实时麦克风
 
-1. 用户点击按钮，确保 `AudioContext.resume()` 发生在用户手势内。
-2. 请求单声道音频，并把 `echoCancellation/noiseSuppression/autoGainControl` 设为首选关闭；浏览器可忽略这些 hint。
+1. 用户点击按钮，在用户手势内创建 `AudioContext` 并调用 `resume()`；不等待恢复 Promise 就请求麦克风，避免音频引擎阻塞权限请求。
+2. 请求单声道音频，并把 `echoCancellation/noiseSuppression/autoGainControl` 设为首选关闭；浏览器可忽略这些 hint。等待权限时可取消；晚返回的流立即释放。
 3. `MediaStreamAudioSourceNode` 连接 `AnalyserNode`，不连接扬声器，避免反馈。
-4. `requestAnimationFrame` 驱动，但用时间戳把 DSP 限制到约 20 Hz。
-5. 每次从 AnalyserNode 读取 4096 samples，送入共享 pipeline。
-6. 停止时取消 RAF、disconnect nodes、停止全部 tracks、关闭 AudioContext。
+4. 授权和建立连接后再次检查音频状态，必要时恢复；恢复最长等待 8 秒，只有状态为 `running` 才进入实时调音。
+5. `requestAnimationFrame` 驱动，但用时间戳把 DSP 限制到约 20 Hz。
+6. 每次从 AnalyserNode 读取 4096 samples，送入共享 pipeline；同时显示去直流后的收音音量，连续 3 秒音量不足时给出无声/低音量提示。
+7. 监听音频状态和轨道结束事件；即使状态仍为 `running`，音频时钟连续 3 秒不前进或麦克风连续 3 秒被系统静音，也会停止并提示重新连接。普通安静环境不会触发这类中断。
+8. 停止时取消启动等待和 RAF、移除监听、disconnect nodes、停止全部 tracks、关闭 AudioContext。
 
 监听 `visibilitychange/pagehide`，页面不可见时停止。任何异常都转成用户可读状态，并显示录音入口。
 

@@ -10,23 +10,36 @@ function makeEnvironment() {
     sourceDisconnected: false,
     analyserDisconnected: false,
     trackStopped: false,
-    contextClosed: false
+    contextClosed: false,
+    resumeCalls: 0
   };
 
+  const track = new EventTarget();
+  track.readyState = "live";
+  track.stop = () => {
+    track.readyState = "ended";
+    state.trackStopped = true;
+  };
   const stream = {
     getTracks() {
-      return [{
-        stop() {
-          state.trackStopped = true;
-        }
-      }];
+      return [track];
+    },
+    getAudioTracks() {
+      return [track];
     }
   };
 
-  class FakeAudioContext {
+  class FakeAudioContext extends EventTarget {
     constructor() {
+      super();
       this.state = "running";
       this.sampleRate = 48_000;
+      state.context = this;
+    }
+
+    async resume() {
+      state.resumeCalls += 1;
+      this.state = "running";
     }
 
     createMediaStreamSource() {
@@ -59,6 +72,8 @@ function makeEnvironment() {
 
   return {
     state,
+    stream,
+    track,
     environment: {
       AudioContext: FakeAudioContext,
       navigator: {
@@ -118,13 +133,14 @@ test("microphone start fails cleanly when browser capture is unavailable", async
   assert.equal(source.isStarting, false);
 });
 
-test("stopping during AudioContext resume prevents a later permission request", async () => {
+test("a pending AudioContext resume does not block the microphone permission request", async () => {
+  const { environment, state, stream } = makeEnvironment();
   let resolveResume;
   let mediaRequests = 0;
-  let contextClosed = false;
 
-  class SuspendedAudioContext {
+  class SuspendedAudioContext extends environment.AudioContext {
     constructor() {
+      super();
       this.state = "suspended";
     }
 
@@ -134,36 +150,226 @@ test("stopping during AudioContext resume prevents a later permission request", 
       });
       this.state = "running";
     }
-
-    async close() {
-      this.state = "closed";
-      contextClosed = true;
-    }
   }
 
-  const source = new MicrophoneSource({
-    environment: {
-      AudioContext: SuspendedAudioContext,
-      navigator: {
-        mediaDevices: {
-          async getUserMedia() {
-            mediaRequests += 1;
-            return { getTracks: () => [] };
-          }
-        }
-      }
-    },
-    onFrame() {}
-  });
+  environment.AudioContext = SuspendedAudioContext;
+  environment.navigator.mediaDevices.getUserMedia = async () => {
+    mediaRequests += 1;
+    resolveResume();
+    return stream;
+  };
+  const source = new MicrophoneSource({ environment, onFrame() {} });
 
   const pendingStart = source.start();
-  assert.equal(source.isStarting, true);
+  const permissionRequestedImmediately = mediaRequests === 1;
+  // Unblock the old implementation so the regression reports an assertion failure.
+  if (!permissionRequestedImmediately) {
+    resolveResume();
+  }
+  await pendingStart;
   await source.stop();
-  resolveResume();
+
+  assert.equal(permissionRequestedImmediately, true);
+  assert.equal(state.trackStopped, true);
+});
+
+test("microphone start resumes a context interrupted by the permission prompt", async () => {
+  const { environment, state, stream } = makeEnvironment();
+  environment.navigator.mediaDevices.getUserMedia = async () => {
+    state.context.state = "interrupted";
+    return stream;
+  };
+  const source = new MicrophoneSource({ environment, onFrame() {} });
+
+  await source.start();
+  const contextState = state.context.state;
+  const resumeCalls = state.resumeCalls;
+  await source.stop();
+
+  assert.equal(contextState, "running");
+  assert.equal(resumeCalls, 1);
+});
+
+test("stopping during a permission request releases a late stream", async () => {
+  const { environment, state, stream } = makeEnvironment();
+  let resolveCapture;
+  environment.navigator.mediaDevices.getUserMedia = () => new Promise((resolve) => {
+    resolveCapture = resolve;
+  });
+  const source = new MicrophoneSource({ environment, onFrame() {} });
+
+  const pendingStart = source.start();
+  await source.stop();
+  resolveCapture(stream);
   await pendingStart;
 
   assert.equal(source.isStarting, false);
   assert.equal(source.isRunning, false);
-  assert.equal(mediaRequests, 0);
-  assert.equal(contextClosed, true);
+  assert.equal(state.trackStopped, true);
+  assert.equal(state.contextClosed, true);
+});
+
+test("a context that stays interrupted cannot report microphone capture as running", async () => {
+  const { environment, state, stream } = makeEnvironment();
+  environment.navigator.mediaDevices.getUserMedia = async () => {
+    state.context.state = "interrupted";
+    state.context.resume = async () => {};
+    return stream;
+  };
+  const source = new MicrophoneSource({ environment, onFrame() {} });
+
+  await assert.rejects(source.start(), { name: "NotReadableError" });
+  assert.equal(source.isRunning, false);
+  assert.equal(state.trackStopped, true);
+  assert.equal(state.contextClosed, true);
+});
+
+test("an unresolved post-permission resume times out and releases capture", async () => {
+  const { environment, state, stream } = makeEnvironment();
+  environment.navigator.mediaDevices.getUserMedia = async () => {
+    state.context.state = "interrupted";
+    state.context.resume = () => new Promise(() => {});
+    return stream;
+  };
+  const source = new MicrophoneSource({
+    environment,
+    startupTimeoutMs: 20,
+    onFrame() {}
+  });
+
+  await assert.rejects(source.start(), { name: "TimeoutError" });
+  assert.equal(source.isRunning, false);
+  assert.equal(state.trackStopped, true);
+  assert.equal(state.contextClosed, true);
+});
+
+test("stopping cancels startup even if the browser never answers the permission request", async () => {
+  const { environment, state } = makeEnvironment();
+  environment.navigator.mediaDevices.getUserMedia = () => new Promise(() => {});
+  const source = new MicrophoneSource({ environment, onFrame() {} });
+
+  const pendingStart = source.start();
+  assert.equal(source.isStarting, true);
+  await source.stop();
+  await pendingStart;
+
+  assert.equal(source.isStarting, false);
+  assert.equal(source.isRunning, false);
+  assert.equal(state.contextClosed, true);
+});
+
+test("an interrupted context stops capture and reports a recoverable error", async () => {
+  const { environment, state } = makeEnvironment();
+  const errors = [];
+  const source = new MicrophoneSource({ environment, onFrame() {}, onError: (error) => errors.push(error) });
+
+  await source.start();
+  state.context.state = "interrupted";
+  state.context.dispatchEvent(new Event("statechange"));
+
+  assert.equal(source.isRunning, false);
+  assert.equal(state.trackStopped, true);
+  assert.equal(state.contextClosed, true);
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].name, "AudioContextInterruptedError");
+});
+
+test("an ended audio track stops capture instead of silently reading zeros", async () => {
+  const { environment, state, track } = makeEnvironment();
+  const errors = [];
+  const source = new MicrophoneSource({ environment, onFrame() {}, onError: (error) => errors.push(error) });
+
+  await source.start();
+  track.readyState = "ended";
+  track.dispatchEvent(new Event("ended"));
+
+  assert.equal(source.isRunning, false);
+  assert.equal(state.contextClosed, true);
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].name, "NotReadableError");
+});
+
+test("a frame processing error releases the microphone and allows restarting", async () => {
+  const { environment, state } = makeEnvironment();
+  const errors = [];
+  const source = new MicrophoneSource({
+    environment,
+    onFrame() { throw new Error("Frame processing failed"); },
+    onError: (error) => errors.push(error)
+  });
+
+  await source.start();
+  state.animationCallback(100);
+
+  assert.equal(source.isRunning, false);
+  assert.equal(state.trackStopped, true);
+  assert.equal(state.contextClosed, true);
+  assert.equal(errors.length, 1);
+  environment.navigator.mediaDevices.getUserMedia = async () => makeEnvironment().stream;
+  await source.start();
+  assert.equal(source.isRunning, true);
+  await source.stop();
+});
+
+test("a frozen audio clock is detected even if the context still reports running", async () => {
+  const { environment, state } = makeEnvironment();
+  const errors = [];
+  const source = new MicrophoneSource({ environment, onFrame() {}, onError: (error) => errors.push(error) });
+  await source.start();
+  state.context.currentTime = 0;
+  state.animationCallback(0);
+  state.animationCallback(3000);
+
+  assert.equal(source.isRunning, false);
+  assert.equal(state.trackStopped, true);
+  assert.equal(errors[0].name, "AudioContextInterruptedError");
+});
+
+test("a persistently muted microphone is reported instead of listening forever", async () => {
+  const { environment, state, track } = makeEnvironment();
+  const errors = [];
+  const source = new MicrophoneSource({ environment, onFrame() {}, onError: (error) => errors.push(error) });
+  await source.start();
+  track.muted = true;
+  state.animationCallback(0);
+  state.animationCallback(3000);
+
+  assert.equal(source.isRunning, false);
+  assert.equal(state.trackStopped, true);
+  assert.equal(errors[0].name, "MicrophoneMutedError");
+});
+
+test("quiet input with a progressing audio clock keeps capture running", async () => {
+  const { environment, state } = makeEnvironment();
+  const errors = [];
+  const source = new MicrophoneSource({ environment, onFrame() {}, onError: (error) => errors.push(error) });
+  await source.start();
+  state.context.currentTime = 0;
+  state.animationCallback(0);
+  state.context.currentTime = 3;
+  state.animationCallback(3000);
+
+  assert.equal(source.isRunning, true);
+  assert.equal(errors.length, 0);
+  await source.stop();
+});
+
+test("a failed old permission request cannot tear down a newer capture session", async () => {
+  const { environment } = makeEnvironment();
+  let rejectOldCapture;
+  environment.navigator.mediaDevices.getUserMedia = () => new Promise((resolve, reject) => {
+    rejectOldCapture = reject;
+  });
+  const source = new MicrophoneSource({ environment, onFrame() {} });
+  const oldStart = source.start();
+  await source.stop();
+  await oldStart;
+
+  environment.navigator.mediaDevices.getUserMedia = async () => makeEnvironment().stream;
+  await source.start();
+  rejectOldCapture(new DOMException("Old permission denied", "NotAllowedError"));
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(source.isRunning, true);
+  await source.stop();
 });

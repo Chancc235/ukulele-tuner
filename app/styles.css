@@ -360,6 +360,31 @@ main {
   gap: 0.7rem;
 }
 
+.microphone-signal {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.microphone-signal .progress-row {
+  align-items: start;
+}
+
+.microphone-signal .progress-row > :first-child {
+  flex-shrink: 0;
+}
+
+#microphone-status {
+  text-align: right;
+}
+
+#microphone-level {
+  width: 100%;
+  height: 1rem;
+  margin-top: 0.35rem;
+}
+
 .primary-button,
 .secondary-button {
   display: grid;
